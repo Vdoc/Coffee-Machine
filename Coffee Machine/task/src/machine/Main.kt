@@ -3,20 +3,24 @@ package machine
 import java.util.*
 
 /*
-4/6: Buy, fill, take!
+Stage 5/6: Keep track of the supplies
  */
 val scanner = Scanner(System.`in`)
 
 fun main() {
     val coffeMachine = CoffeMachine()
-    coffeMachine.state.show()
 
-    print("Write action (buy, fill, take): ")
-    val answer = scanner.next()
-    when (answer) {
-        "take" -> coffeMachine.take()
-        "fill" -> coffeMachine.fill()
-        "buy" -> coffeMachine.buy()
+    while (true) {
+        print("Write action (buy, fill, take, remaining, exit): ")
+        val answer = scanner.next()
+        println()
+        when (answer) {
+            "exit" -> break
+            "remaining" -> coffeMachine.state.remaining()
+            "take" -> coffeMachine.take()
+            "fill" -> coffeMachine.fill()
+            "buy" -> coffeMachine.buy()
+        }
     }
 }
 
@@ -33,7 +37,6 @@ class CoffeMachine {
         println("I gave you ${money}")
         money -= money
         println()
-        state.show()
     }
 
     fun fill() {
@@ -51,21 +54,26 @@ class CoffeMachine {
         beans += addBeans
         disposableCups += addDisposableCups
         println()
-        state.show()
     }
 
     fun buy() {
-        print("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino: ")
-        val n = scanner.nextInt()
+        print("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu: ")
+        val n = scanner.next()
         makeCoffee(n)
-        println()
-        state.show()
     }
 
-    fun makeCoffee(whatCoffee: Int) {
+    fun makeCoffee(whatCoffee: String) {
         if (state.isReady(whatCoffee)) {
+            println("I have enough resources, making you a coffee!\n")
             brew()
+        } else if(whatCoffee != "back") {
+            print("Sorry, not enough ")
+            if (water < state.preparedWater) println("water!")
+            if (milk < state.preparedMilk) println("milk!")
+            if (beans < state.preparedBeans) println("coffee beans!")
+            if (disposableCups < 0) println("disposable cups!")
         }
+        println()
     }
 
     fun brew() {
@@ -83,7 +91,7 @@ class State(val coffeMachine: CoffeMachine) {
     var preparedBeans: Int = 0
     var preparedMoney: Int = 0
 
-    fun show() {
+    fun remaining() {
         println("The coffee machine has:\n" +
                 "${coffeMachine.water} of water\n" +
                 "${coffeMachine.milk}  of milk\n" +
@@ -92,22 +100,22 @@ class State(val coffeMachine: CoffeMachine) {
                 "${coffeMachine.money} of money\n")
     }
 
-    fun isReady(whatCoffee: Int): Boolean {
+    fun isReady(whatCoffee: String): Boolean {
         when (whatCoffee) {
-            1 -> {
+            "1" -> {
                 preparedWater = 250
                 preparedMilk = 0
                 preparedBeans = 16
                 preparedMoney = 4
 
             }
-            2 -> {
+            "2" -> {
                 preparedWater = 350
                 preparedMilk = 75
                 preparedBeans = 20
                 preparedMoney = 7
             }
-            3 -> {
+            "3" -> {
                 preparedWater = 200
                 preparedMilk = 100
                 preparedBeans = 12
@@ -115,12 +123,9 @@ class State(val coffeMachine: CoffeMachine) {
             }
             else -> return false
         }
-        if (    coffeMachine.water > preparedWater &&
-                coffeMachine.milk > preparedMilk &&
-                coffeMachine.beans > preparedBeans &&
-                coffeMachine.disposableCups > 0) {
-            return true
-        }
-        else return false
+        return coffeMachine.water >= preparedWater &&
+                coffeMachine.milk >= preparedMilk &&
+                coffeMachine.beans >= preparedBeans &&
+                coffeMachine.disposableCups > 0
     }
 }
